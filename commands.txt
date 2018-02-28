@@ -1,0 +1,129 @@
+RELAY if stuck
+http://telehack.wikia.com
+443, 13337,8080,31173 telnet telehack.com 23
+63.18.35.37
+
+http://vc-infra-01
+
+JognCage Alexi$Craw0110
+
+## Regular repositories
+deb http://http.kali.org/kali kali main non-free contrib
+deb http://security.kali.org/kali-security kali/updates main contrib non-free
+
+./myupdate
+apt-get clean
+apt-get update
+apt-get dist-upgrade
+apt-get auto clean
+apt-get auto remove
+
+
+#!/bin/bash
+
+apt-get update && apt-get upgrade -y && apt-get dist-upgrade && apt-get autoclean && atp-get autoremore -y
+echo Updates Completed
+
+Reboot afterwards
+
+
+ssh-keygen  
+
+
+
+http://hyperpolyglot.org/
+
+
+Ping sweep
+
+for ip in 192.168.1.{1..10}; do  # for loop and the {} operator
+    ping -c 1 -t 1 192.168.1.1 > /dev/null 2> /dev/null  # ping and discard output
+    if [ $? -eq 0 ]; then  # check the exit code
+        echo "${ip} is up" # display the output
+        # you could send this to a log file by using the >>pinglog.txt redirect
+    else
+        echo "${ip} is down"
+    fi
+done
+
+or 
+
+for ip in 192.168.1.{1..10}; do ping -c 1 -t 1 $ip > /dev/null && echo "${ip} is up"; done
+or
+nmap -sn 10.1.1.1-255
+This will ping all the addresses in the range 10.1.1.1 to 10.1.1.255 and let you know which ones answer. 
+
+
+There is also fping:
+
+fping -g 192.168.1.0/24
+
+or:
+
+fping -g 192.168.1.0 192.168.1.255
+
+or show only hosts that are alive:
+
+fping -ag 192.168.1.0/24
+
+
+
+As other posters pointed out, nmap is the way to go, but here's how to do the equivalent of a ping scan in bash. I wouldn't use the broadcast ping, as a lot of systems are configured not to respond to broadcast ICMP nowadays.
+
+for i in $(seq 1 254); do
+    host="192.168.100.$i"
+    ping -c 1 -W 1 $host &> /dev/null
+    echo -n "Host $host is "
+    test $? -eq 0 && echo "up" || echo "down"
+done
+
+
+
+download and sort a webpage and filter for subdomains
+Download the yahoo homepage using wget:
+       #wget "http://yahoo.com
+Examine the results using cat:
+        #cat index.html
+Now we need to try and filter our results to subdomains of yahoo.com. To do this we can search for the lines with matching text yahoo.com:
+       #cat index.html | grep "yahoo.com"
+Your result should be be too large to be of use. If we want to continue to filter the result we can assume that most of the domains have a "http://" in front of them, and we can try cutting the lines based on a delimiter of a colon and taking the second field
+       #cat index.html | grep "yahoo.com" | cut -d ":" -f 2
+Now most of the lines will start with // so we can cut based on a "/" and grab the 3rd field
+      #cat index.html | grep "yahoo.com" | cut -d ":" -f 2 | cut -d "/" -f 3
+Remove duplicate lines with sort
+      #cat index.html | grep "yahoo.com" | cut -d ":" -f 2 | cut -d "/" -f 3 | sort -u
+If you need to remove the trailing characters from a line with a domain name. Like in this example:
+        info.yahoo.com" this is a sample of training text 
+      then you may have a problem because the trailing character starts with a quotation mark. In this case you will need to use a backslash to escape the quotation mark and have it function as a string instead of a demarcation point. See below:
+       #cat index.html | grep "yahoo.com" | cut -d ":" -f 2 | cut -d "/" -f 3 | sort -u | cut -d "\"" -f 1
+Save your results to text
+       #cat index.html | grep "yahoo.com" | cut -d ":" -f 2 | cut -d "/" -f 3 | sort -u | cut -d "\"" -f 1 > domains.txt
+Output your text file to the screen and continue to sort and cut and grep until you have only unique subdomains
+       #cat domains.txt | sort -u | grep "yahoo.com"
+
+	   
+	   http://www.danscourses.com/Network-Penetration-Testing/bash-line-commands-a-shell-scripting.html
+	   http://www.danscourses.com/Network-Penetration-Testing/
+	   
+	   
+	   ps aux | grep ' '
+	   kill -9 
+	   bg jobs in the background
+	   fg jobs in the foreground
+	   
+	   
+	   ARMATAGE
+	  http://fastandeasyhacking.com/start
+	  msfdb init
+    service postgresql start
+    service metasploit start
+    service metasploit stop
+	
+	
+whois domain.com
+nslookup domain.com
+host -t ns domain.com
+host -l ns domain.com
+theharvester -d domain.com -l 500 -b all
+
+	  

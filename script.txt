@@ -1,0 +1,20 @@
+#!/bin/bash
+
+rm domains* index* server-i* std*
+
+#prompt user abd read in user input
+echo -n "Please enter domain to get example: domain.com > "
+read tDomain
+wget $tDomain
+
+cat index.html | grep "href=" index.html | cut -d "/" -f 3 | grep "\." | cut -d '"' -f 1 | grep $tDomain | sort -u > domains.txt
+
+#read in input from file domains file and tie hostname to ipaddress
+for name in $(cat domains.txt);
+	do host $name >> server-ips.txt 2>>stderr.txt;
+	done
+	
+for ip in $(cat server-ips.txt); do
+	ping -c 1 $ip >> ping-host.txt 2>>stderr.txt
+	done
+	
